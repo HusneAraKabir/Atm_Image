@@ -1,0 +1,231 @@
+{%load static%}
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="shortcut icon" href="{%static '/favicon.ico'%}" type="image/x-icon">
+    <script src="{%static 'js/jquery.min.js'%}"></script>
+
+
+    <link rel="stylesheet" href="{%static 'css/homepage.css'%}">
+
+    {%block title %}
+    {%endblock %}
+    {%block style%}
+    {%endblock%}
+</head>
+
+<!-- <body class="app sidebar-fixed sidebar-lg-show"> -->
+<body>
+    <div class="monitor">
+        <div class="title" id="title"><b>Welcome to Bank</b></div>
+        <div class="subtitle" id="subtitle">A way for smart banking</div>
+        <div class="linegap" id="linegap"></div>
+        
+        <div class="btngroup">
+            <div id="dynamic11">Dynamic11</div>
+            <div id="dynamic12">Dynamic12</div>
+            <div id="dynamic13">Dynamic13</div>
+        </div>
+        
+        <div class="btngroup">
+            <div id="dynamic21">Dynamic21</div>
+            <div id="dynamic22">Dynamic22</div>
+            <div id="dynamic23">Dynamic23</div>
+        </div>
+        
+        <div class="btngroup">
+            <div id="dynamic31">Dynamic31</div>
+            <div id="dynamic32">Dynamic32</div>
+            <div id="dynamic33">Dynamic33</div>
+        </div>
+
+        <div class="bottomline" id="bottomline">Secure your money with our bank</div>
+
+    </div>
+</body>
+
+<script>
+    initialUI()
+
+    function cardnumbercheck()
+    {
+        console.log('current_stage--------', current_stage)
+        switch (current_stage)
+        {
+            case 'InsertCard':
+                try {
+                    card_n = Number($("#card_number").val());
+                    if(card_n<10000000000 || card_n>9999999999999999)
+                    {
+                        $("#dynamic12").html('<div>Insert a Valid Card</div>')
+                    }
+                    else
+                    {
+                        console.log('valid card number-------'+card_n)
+
+                        $.ajax({
+                            url: "{%url 'GetCardInfo' %}",
+                            data: { 'card_n': card_n },
+                            success: function (data) {
+                                current_stage = data['stage']
+                                if(current_stage == 'Register')
+                                {
+                                    registerUserUI(card_n)
+                                }
+                                else if (current_stage == 'TakePassword')
+                                {
+                                    takePasswordUI(card_n)
+                                }
+                            },
+                            error: function () { $("#dynamic12").html('Something went wrong.') }
+                        });
+                    }
+                }
+                catch(e)
+                {
+                    $("#dynamic12").html('<div>A Valid Number is required</div>')
+                }
+                break;
+            
+            case 'Register':
+                try {
+                    card_n = Number($("#card_number").val());
+                    pass = Number($("#password").val());
+                    c_pass = Number($("#c_password").val());
+
+                    if(card_n<10000000000 || card_n>9999999999999999 || pass != c_pass)
+                    {
+                        $("#subtitle").html('<div>Insert valid data</div>')
+                        initialUI()
+                    }
+                    else
+                    {
+                        $.ajax({
+                            url: "{%url 'RegisterUser' %}",
+                            data: { 'card_n': card_n, 'pass': pass },
+                            success: function (data) {
+                                current_stage = data['stage']
+                                initialUI();
+                                ("#subtitle").html('Registration Successful. Log In Again.')
+                            },
+                            error: function () {initialUI(); $("#subtitle").html('Something went wrong. Try Again.') }
+                        });
+                    }
+                }
+                catch(e)
+                {
+                    $("#dynamic12").html('<div>A Valid Number is required</div>')
+                }
+                break;
+            
+            case 'TakePassword':
+                try {
+                    card_n = Number($("#card_number").val());
+                    pass = Number($("#password").val());
+                    otp = Number($("#otp").val());
+
+                    $.ajax({
+                        url: "{%url 'LoginUser' %}",
+                        data: {'card_n': card_n, 'pass': pass, 'otp': otp },
+                        success: function (data) {
+                            current_stage = data['stage']
+                            console.log('----'+current_stage);
+                            if(current_stage == 'Home')
+                            {
+                                UserHomePageUI(card_n)
+                            }
+                            else
+                            {
+                                initialUI()
+                            }
+                        },
+                        error: function () {initialUI(); $("#subtitle").html('Something went wrong. Try Again.') }
+                    });
+                }
+                catch(e)
+                {
+                    $("#dynamic12").html('<div>A Valid Number is required</div>')
+                }
+                break;
+        }
+        
+    }
+
+    function initialUI()
+    {
+        // ---------- Card Remove ----------
+        current_stage = 'InsertCard'
+        
+        $("#subtitle").html('<div>A way for smart banking</div>')
+
+        $("#dynamic11").html('')
+        $("#dynamic12").html('<div>Insert Your Card</div>')
+        $("#dynamic13").html('')
+
+        $("#dynamic21").html('')
+        $("#dynamic22").html('<input id="card_number" type="number" min="10000000000" max="9999999999999999" />')
+        $("#dynamic23").html('')
+
+        $("#dynamic31").html('')
+        $("#dynamic32").html('')
+        $("#dynamic33").html('<button onclick="cardnumbercheck()">Enter</button>')
+    }
+
+    function registerUserUI(card_n)
+    {
+        $("#subtitle").html('<div>New User - Register Please</div>')
+
+        $("#dynamic11").html('Card Number:')
+        $("#dynamic12").html('<input id="card_number" type="number" value="'+card_n+'" readonly/>')
+        $("#dynamic13").html('')
+
+        $("#dynamic21").html('<input id="password" type="password" placeholder="Password"/>')
+        $("#dynamic22").html('')
+        $("#dynamic23").html('<input id="c_password" type="password" placeholder="Confirm Password"/>')
+
+        $("#dynamic31").html('')
+        $("#dynamic32").html('')
+        $("#dynamic33").html('<button onclick="cardnumbercheck()">Register</button>')
+    }
+
+    function takePasswordUI(card_n)
+    {
+        $("#dynamic11").html('')
+        $("#dynamic12").html('<input id="card_number" type="number" value="'+card_n+'" readonly/>')
+        $("#dynamic13").html('')
+
+        $("#dynamic21").html('<input id="password" type="password" placeholder="Password"/>')
+        $("#dynamic22").html('')
+        $("#dynamic23").html('<input id="otp" type="number" placeholder="Mobile OTP."/>')
+
+        $("#dynamic31").html('')
+        $("#dynamic32").html('')
+        $("#dynamic33").html('<button onclick="cardnumbercheck()">Login</button>')
+    }
+
+    function UserHomePageUI()
+    {
+        current_stage = 'InsertCard'
+        
+        $("#subtitle").html('<div>Main Menu</div>')
+
+        $("#dynamic11").html('<div>Option 1</div>')
+        $("#dynamic12").html('')
+        $("#dynamic13").html('<div>Option 3</div>')
+
+        $("#dynamic21").html('<div>Option 2</div>')
+        $("#dynamic22").html('')
+        $("#dynamic23").html('<div>Option 4</div>')
+
+        $("#dynamic31").html('')
+        $("#dynamic32").html('')
+        $("#dynamic33").html('<button onclick="initialUI()">Remove Card</button>')
+    }
+
+
+</script>
+
+</html>

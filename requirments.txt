@@ -1,0 +1,8 @@
+Django==4.1.2
+psycopg2==2.9.3
+opencv_python==4.7.0.68
+opencv-contrib-python==4.7.0.68
+pyserial==3.5
+Pillow==9.4.0
+
+
